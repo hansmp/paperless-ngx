@@ -12,8 +12,8 @@ from django.db import migrations
 from django.db import models
 from django.template.defaultfilters import slugify
 
-from documents.file_handling import defaultdictNoStr
-from documents.file_handling import many_to_dictionary
+from documents.file_handling_helper import defaultdictNoStr
+from documents.file_handling_helper import many_to_dictionary
 
 logger = logging.getLogger("paperless.migrations")
 

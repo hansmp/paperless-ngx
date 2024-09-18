@@ -1,5 +1,6 @@
 import datetime
 import math
+import os
 import re
 import zoneinfo
 from collections.abc import Iterable
@@ -32,6 +33,7 @@ if settings.AUDIT_LOG_ENABLED:
     from auditlog.context import set_actor
 
 from documents import bulk_edit
+from documents import templating
 from documents.data_models import DocumentSource
 from documents.models import Correspondent
 from documents.models import CustomField
@@ -1474,36 +1476,32 @@ class StoragePathSerializer(MatchingModelSerializer, OwnedObjectSerializer):
             "set_permissions",
         )
 
+    # this is called when a storage path **syntax** needs to be validated (e.g. creating new storage paths)
     def validate_path(self, path):
+        validationResult: templating.TemplatingValidationResult = {}
+        trimmed = ""
         try:
-            path.format(
-                title="title",
-                correspondent="correspondent",
-                document_type="document_type",
-                created="created",
-                created_year="created_year",
-                created_year_short="created_year_short",
-                created_month="created_month",
-                created_month_name="created_month_name",
-                created_month_name_short="created_month_name_short",
-                created_day="created_day",
-                added="added",
-                added_year="added_year",
-                added_year_short="added_year_short",
-                added_month="added_month",
-                added_month_name="added_month_name",
-                added_month_name_short="added_month_name_short",
-                added_day="added_day",
-                asn="asn",
-                tags="tags",
-                tag_list="tag_list",
-                owner_username="someone",
-                original_name="testfile",
-                doc_pk="doc_pk",
-            )
+            validationResult = templating.validateTemplate(path, False)
 
-        except KeyError as err:
-            raise serializers.ValidationError(_("Invalid variable detected.")) from err
+            trimmed = validationResult.preview.strip(os.sep)
+
+        except Exception as err:
+            raise serializers.ValidationError(
+                _("Unknown error validating path."),
+            ) from err
+
+        if not trimmed and not trimmed.isspace():
+            validationResult.errors.append("Template results in empty string!")
+
+        if len(validationResult.errors) > 0:
+            msg = ""
+            for err in validationResult.errors:
+                msg += f" & ERROR: {err}"
+            for err in validationResult.warnings:
+                msg += f" & WARNING: {err}"
+            raise serializers.ValidationError(
+                _(f"Error rendering jinja template: {msg.strip(' &')}"),
+            )
 
         return path
 
