@@ -1491,7 +1491,7 @@ class StoragePathSerializer(MatchingModelSerializer, OwnedObjectSerializer):
             ) from err
 
         if not trimmed and not trimmed.isspace():
-            validationResult.errors.append("Template results in empty string!")
+            validationResult.errors.append(_("Template results in empty string!"))
 
         if len(validationResult.errors) > 0:
             msg = ""

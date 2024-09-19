@@ -177,7 +177,7 @@ class TestBulkDownload(DirectoriesMixin, APITestCase):
             content_type="application/json",
         )
 
-    @override_settings(FILENAME_FORMAT="{correspondent}/{title}")
+    @override_settings(FILENAME_FORMAT="{{correspondent}}/{{title}}")
     def test_formatted_download_originals(self):
         """
         GIVEN:
@@ -229,7 +229,7 @@ class TestBulkDownload(DirectoriesMixin, APITestCase):
                     zipf.read("a space name/Title 2 - Doc 3.jpg"),
                 )
 
-    @override_settings(FILENAME_FORMAT="somewhere/{title}")
+    @override_settings(FILENAME_FORMAT="somewhere/{{title}}")
     def test_formatted_download_archive(self):
         """
         GIVEN:
@@ -272,7 +272,7 @@ class TestBulkDownload(DirectoriesMixin, APITestCase):
             with self.doc3.archive_file as f:
                 self.assertEqual(f.read(), zipf.read("somewhere/Title 2 - Doc 3.pdf"))
 
-    @override_settings(FILENAME_FORMAT="{document_type}/{title}")
+    @override_settings(FILENAME_FORMAT="{{document_type}}/{{title}}")
     def test_formatted_download_both(self):
         """
         GIVEN:

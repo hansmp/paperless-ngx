@@ -121,12 +121,13 @@ def generate_filename(
                 path = path.replace("-none-", "")  # remove rest of the occurrences
 
             path = path.replace("-none-", "none")  # backward compatibility
-            path = path.strip(os.sep)
+            path = path.strip(os.sep).strip()
 
     except Exception:
         logger.warning(
             f"Invalid filename_format '{filename_format}', falling back to default",
         )
+        path = ""
 
     counter_str = f"_{counter:02}" if counter else ""
 

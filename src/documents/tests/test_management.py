@@ -19,7 +19,7 @@ from documents.tests.utils import FileSystemAssertsMixin
 sample_file = os.path.join(os.path.dirname(__file__), "samples", "simple.pdf")
 
 
-@override_settings(FILENAME_FORMAT="{correspondent}/{title}")
+@override_settings(FILENAME_FORMAT="{{correspondent}}/{{title}}")
 class TestArchiver(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
     def make_models(self):
         return Document.objects.create(
@@ -71,7 +71,7 @@ class TestArchiver(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
         self.assertIsNone(doc.archive_filename)
         self.assertIsFile(doc.source_path)
 
-    @override_settings(FILENAME_FORMAT="{title}")
+    @override_settings(FILENAME_FORMAT="{{title}}")
     def test_naming_priorities(self):
         doc1 = Document.objects.create(
             checksum="A",
@@ -192,7 +192,7 @@ class TestRenamer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
         Path(doc.source_path).touch()
         Path(doc.archive_path).touch()
 
-        with override_settings(FILENAME_FORMAT="{correspondent}/{title}"):
+        with override_settings(FILENAME_FORMAT="{{correspondent}}/{{title}}"):
             call_command("document_renamer")
 
         doc2 = Document.objects.get(id=doc.id)

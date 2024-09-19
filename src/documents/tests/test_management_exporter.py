@@ -298,7 +298,7 @@ class TestExportImport(
         )
 
         with override_settings(
-            FILENAME_FORMAT="{created_year}/{correspondent}/{title}",
+            FILENAME_FORMAT="{{created_year}}/{{correspondent}}/{{title}}",
         ):
             self.test_exporter(use_filename_format=True)
 
@@ -401,7 +401,7 @@ class TestExportImport(
 
         self.assertTrue(len(manifest), 6)
 
-    @override_settings(FILENAME_FORMAT="{title}/{correspondent}")
+    @override_settings(FILENAME_FORMAT="{{title}}/{{correspondent}}")
     def test_update_export_changed_location(self):
         shutil.rmtree(os.path.join(self.dirs.media_dir, "documents"))
         shutil.copytree(
@@ -491,7 +491,7 @@ class TestExportImport(
         args = ["document_exporter", self.target, "--zip", "--use-filename-format"]
 
         with override_settings(
-            FILENAME_FORMAT="{created_year}/{correspondent}/{title}",
+            FILENAME_FORMAT="{{created_year}}/{{correspondent}}/{{title}}",
         ):
             call_command(*args)
 

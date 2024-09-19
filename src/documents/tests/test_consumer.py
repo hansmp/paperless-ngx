@@ -772,7 +772,7 @@ class TestConsumer(
         # Database empty
         self.assertEqual(Document.objects.all().count(), 0)
 
-    @override_settings(FILENAME_FORMAT="{correspondent}/{title}")
+    @override_settings(FILENAME_FORMAT="{{correspondent}}/{{title}}")
     def testFilenameHandling(self):
         with self.get_consumer(
             self.get_test_file(),
@@ -788,7 +788,7 @@ class TestConsumer(
 
         self._assert_first_last_send_progress()
 
-    @override_settings(FILENAME_FORMAT="{correspondent}/{title}")
+    @override_settings(FILENAME_FORMAT="{{correspondent}}/{{title}}")
     @mock.patch("documents.signals.handlers.generate_unique_filename")
     def testFilenameHandlingUnstableFormat(self, m):
         filenames = ["this", "that", "now this", "i cannot decide"]
@@ -900,7 +900,7 @@ class TestConsumer(
         self.assertIsFile(dst)
         self._assert_first_last_send_progress(last_status="FAILED")
 
-    @override_settings(FILENAME_FORMAT="{title}")
+    @override_settings(FILENAME_FORMAT="{{title}}")
     @mock.patch("documents.parsers.document_consumer_declaration.send")
     def test_similar_filenames(self, m):
         shutil.copy(

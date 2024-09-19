@@ -4,6 +4,7 @@ from pathlib import PurePath
 import pathvalidate
 from django.template.defaultfilters import slugify
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from jinja2 import ChainableUndefined
 from jinja2 import DebugUndefined
 from jinja2 import Environment
@@ -11,9 +12,9 @@ from jinja2 import TemplateSyntaxError
 from jinja2 import UndefinedError
 from jinja2.meta import find_undeclared_variables
 
-from documents.file_handling_helper import defaultdictNoStr
-from documents.file_handling_helper import many_to_dictionary
 from documents.models import Document
+from documents.templating_helper import defaultdictNoStr
+from documents.templating_helper import many_to_dictionary
 
 
 ###############################################################################
@@ -174,7 +175,7 @@ def validateTemplate(
                 f"Undeclared variables in template found. template: '{templatedString}' / undefined Variables: {undef!r}",
             )
             for var in undef:
-                result.errors.append(f"Undefined variable: {var}")
+                result.errors.append(_(f"Undefined variable: {var}"))
 
         resolvedString = loadTemplateWithJinja2(
             templatedString,
@@ -184,13 +185,13 @@ def validateTemplate(
         result.preview = resolvedString
 
         if not allowEmptyOuptut and not resolvedString and not resolvedString.isspace():
-            result.errors.append("Template results in empty string!")
+            result.errors.append(_("Template results in empty string!"))
 
     except UndefinedError as err:
-        result.errors.append(f"Exception: {err}")
+        result.errors.append(_(f"Exception: {err}"))
 
     except TemplateSyntaxError as err:
-        result.errors.append(f"Syntax error: {err}")
+        result.errors.append(_(f"Syntax error: {err}"))
 
     return result
 

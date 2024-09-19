@@ -152,7 +152,7 @@ class TestApiStoragePaths(DirectoriesMixin, APITestCase):
         user = User.objects.create_superuser(username="temp_admin")
         self.client.force_authenticate(user=user)
 
-        self.sp1 = StoragePath.objects.create(name="sp1", path="Something/{checksum}")
+        self.sp1 = StoragePath.objects.create(name="sp1", path="Something/{{checksum}}")
 
     def test_api_get_storage_path(self):
         """
@@ -187,7 +187,7 @@ class TestApiStoragePaths(DirectoriesMixin, APITestCase):
             json.dumps(
                 {
                     "name": "A storage path",
-                    "path": "Somewhere/{asn}",
+                    "path": "Somewhere/{{asn}}",
                 },
             ),
             content_type="application/json",
@@ -211,7 +211,7 @@ class TestApiStoragePaths(DirectoriesMixin, APITestCase):
             json.dumps(
                 {
                     "name": "Another storage path",
-                    "path": "Somewhere/{correspdent}",
+                    "path": "Somewhere/{{correspdent}}",
                 },
             ),
             content_type="application/json",
@@ -235,12 +235,12 @@ class TestApiStoragePaths(DirectoriesMixin, APITestCase):
             json.dumps(
                 {
                     "name": "Storage path with placeholders",
-                    "path": "{title}/{correspondent}/{document_type}/{created}/{created_year}"
-                    "/{created_year_short}/{created_month}/{created_month_name}"
-                    "/{created_month_name_short}/{created_day}/{added}/{added_year}"
-                    "/{added_year_short}/{added_month}/{added_month_name}"
-                    "/{added_month_name_short}/{added_day}/{asn}/{tags}"
-                    "/{tag_list}/{owner_username}/{original_name}/{doc_pk}/",
+                    "path": "{{title}}/{{correspondent}}/{{document_type}}/{{created}}/{{created_year}}"
+                    "/{{created_year_short}}/{{created_month}}/{{created_month_name}}"
+                    "/{{created_month_name_short}}/{{created_day}}/{{added}}/{{added_year}}"
+                    "/{{added_year_short}}/{{added_month}}/{{added_month_name}}"
+                    "/{{added_month_name_short}}/{{added_day}}/{{asn}}/{{tags}}"
+                    "/{{tag_list}}/{{owner_username}}/{{original_name}}/{{doc_pk}}/",
                 },
             ),
             content_type="application/json",
@@ -265,7 +265,7 @@ class TestApiStoragePaths(DirectoriesMixin, APITestCase):
         response = self.client.patch(
             f"{self.ENDPOINT}{self.sp1.pk}/",
             data={
-                "path": "somewhere/{created} - {title}",
+                "path": "somewhere/{{created}} - {{title}}",
             },
         )
 
@@ -297,7 +297,7 @@ class TestApiStoragePaths(DirectoriesMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # sp with no documents
-        sp2 = StoragePath.objects.create(name="sp2", path="Something2/{checksum}")
+        sp2 = StoragePath.objects.create(name="sp2", path="Something2/{{checksum}}")
         response = self.client.delete(
             f"{self.ENDPOINT}{sp2.pk}/",
         )
