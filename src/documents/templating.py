@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from jinja2 import ChainableUndefined
 from jinja2 import DebugUndefined
 from jinja2 import Environment
+from jinja2 import StrictUndefined
 from jinja2 import TemplateSyntaxError
 from jinja2 import UndefinedError
 from jinja2.meta import find_undeclared_variables
@@ -37,6 +38,7 @@ class TemplatingValidationResult:
 logger = logging.getLogger("paperless.templating")
 jinjaDebugEnv = Environment(undefined=DebugChainableUndefined)
 jinjaRenderEnv = Environment(undefined=ChainableUndefined)
+jinjaRenderEnvStrict = Environment(undefined=StrictUndefined)
 
 
 ###############################################################################
@@ -201,11 +203,14 @@ def renderTemplate(
     templatedString: str,
     doc: Document,
 ):
+    if doc is None:
+        logger.error("Can't render template without document!")
+        return None
     try:
         globals = createGlobals(doc)
         resolvedString = loadTemplateWithJinja2(
             templatedString,
-            jinjaRenderEnv,
+            jinjaRenderEnvStrict,
             globals,
         )
 
