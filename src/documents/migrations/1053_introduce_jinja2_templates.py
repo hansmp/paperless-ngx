@@ -11,8 +11,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("paperless.migrations")
 
-regexOldSyntax = r"((.?)({{1}([^{}]*?)}{1})(.?))"
-regexNewSyntax = r"({{2}([^{}]*?)}{2})"
+regexOldSyntax_braces = r"((.?)({{1}([^{}]*?)}{1})(.?))"
+regexNewSyntax_braces = r"({{2}([^{}]*?)}{2})"
+
+regexSyntax_array = r"({(([^{}]*?)\[(\D*?)\]([^{}]*?))})"
 
 ###############################################################################
 
@@ -38,29 +40,15 @@ def updateStoragePathToJinja2(apps):
     storagePaths = apps.get_model("documents", "StoragePath")
 
     logger.info("Upgrading StoragePath to Jinja2 template syntax")
+
     storagePath: StoragePath
     for storagePath in storagePaths.objects.all():
         logger.info(f"Handling storage path: {storagePath.path}")
 
-        matches = re.findall(regexOldSyntax, storagePath.path)
-        newStoragePath = storagePath.path
+        storagePath.path = upgradeBracesToJinja2Format(storagePath.path)
+        storagePath.path = upgradeArrayAccessToJinja2Format(storagePath.path)
+        logger.info(f"New storage path: {storagePath.path}")
 
-        for match in matches:
-            # handle single tag here
-            logger.info(f"Found tag: {match[2]}")
-            if (
-                re.match(regexNewSyntax, match[0]) is not None
-            ):  # we need to check as the old syntax will fit in the new one!
-                logger.info("Already jinja templated key.")
-                continue
-            logger.info("Upgrading to jinja2 syntax")
-            newStoragePath = newStoragePath.replace(
-                match[2],
-                f"{{{{ {match[3].strip()} }}}}",
-            )
-        logger.info(f"New storage path: {newStoragePath}")
-
-        storagePath.path = newStoragePath
         storagePath.save()
 
         logger.info("Done upgrading storage paths.")
@@ -76,23 +64,119 @@ def downgradeStoragePathToClassicPythonString(apps):
     logger.warning(
         "This operation is not fully supported! It will only work correctly for simple variable tags like {{foo}}!",
     )
+
     storagePath: StoragePath
     for storagePath in storagePaths.objects.all():
         logger.info(f"Handling storage path: {storagePath.path}")
 
-        matches = re.findall(regexNewSyntax, storagePath.path)
-        newStoragePath = storagePath.path
+        storagePath.path = downgradeBracesToPythonFormat(storagePath.path)
+        storagePath.path = dongradeArrayAccessToPythonFormat(storagePath.path)
+        logger.info(f"New storage path: {storagePath.path}")
 
-        for match in matches:
-            # handle single tag here
-            logger.info(f"Found tag: {match[0]}")
-            newStoragePath = newStoragePath.replace(match[0], f"{{{match[1].strip()}}}")
-        logger.info(f"New storage path: {newStoragePath}")
-
-        storagePath.path = newStoragePath
         storagePath.save()
 
         logger.info("Done downgrading storage paths.")
+
+
+###############################################################################
+
+
+def upgradeBracesToJinja2Format(templateString: str):
+    matches = re.findall(regexOldSyntax_braces, templateString)
+    newTemplateString = templateString
+
+    for match in matches:
+        # handle single tag here
+        logger.info(f"Found tag: {match[2]}")
+        if (
+            re.match(regexNewSyntax_braces, match[0]) is not None
+        ):  # we need to check as the old syntax will fit in the new one!
+            logger.info("Already jinja templated key.")
+            continue
+
+        logger.info("Upgrading to jinja2 syntax")
+        newTemplateString = newTemplateString.replace(
+            match[2],
+            f"{{{{ {match[3].strip()} }}}}",
+        )
+    logger.info(
+        f"Done upgrading braces from `{templateString}` to `{newTemplateString}`",
+    )
+    return newTemplateString
+
+
+###############################################################################
+
+
+def upgradeArrayAccessToJinja2Format(templateString: str):
+    newTemplateString = templateString
+    matches = re.findall(regexSyntax_array, templateString)
+
+    for match in matches:
+        # handle single tag here
+        logger.info(f"Found tag: {match[0]}")
+        if match[3].startswith("'") and match[3].endswith("'"):
+            logger.info("Already jinja templated array access.")
+            continue
+
+        newAccess = f"{match[2]}['{match[3]}']{match[4]}"
+        newTemplateString = newTemplateString.replace(
+            match[1],
+            newAccess,
+        )
+
+    logger.info(
+        f"Done upgrading array access from `{templateString}` to `{newTemplateString}`",
+    )
+    return newTemplateString
+
+
+###############################################################################
+
+
+def downgradeBracesToPythonFormat(templateString: str):
+    matches = re.findall(regexNewSyntax_braces, templateString)
+    newTemplateString = templateString
+
+    for match in matches:
+        # handle single tag here
+        logger.info(f"Found tag: {match[0]}")
+        newTemplateString = newTemplateString.replace(
+            match[0],
+            f"{{{match[1].strip()}}}",
+        )
+
+    logger.info(
+        f"Done downgrading braces from `{templateString}` to `{newTemplateString}`",
+    )
+    return newTemplateString
+
+
+###############################################################################
+
+
+def dongradeArrayAccessToPythonFormat(templateString: str):
+    newTemplateString = templateString
+    matches = re.findall(regexSyntax_array, templateString)
+
+    for match in matches:
+        # handle single tag here
+        logger.info(f"Found tag: {match[0]}")
+        logger.info(match)
+        if not match[3].startswith("'") and not match[3].endswith("'"):
+            logger.info("Already python templated array access.")
+            continue
+
+        newAccess = f"{match[2]}[{match[3].strip("' ")}]{match[4]}"
+        newTemplateString = newTemplateString.replace(
+            match[1],
+            newAccess,
+        )
+
+    logger.info(
+        f"Done downgrading array access from `{templateString}` to `{newTemplateString}`",
+    )
+    return newTemplateString
 
 
 ###############################################################################
