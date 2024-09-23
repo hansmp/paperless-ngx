@@ -265,7 +265,7 @@ This variable allows you to configure the filename (folders are allowed)
 using placeholders. For example, configuring this to
 
 ```bash
-PAPERLESS_FILENAME_FORMAT={created_year}/{correspondent}/{title}
+PAPERLESS_FILENAME_FORMAT={{ created_year }}/{{ correspondent }}/{{ title }}
 ```
 
 will create a directory structure as follows:
@@ -300,41 +300,44 @@ will create a directory structure as follows:
 
 #### Placeholders
 
-Paperless provides the following placeholders within filenames:
+Paperless uses Jinja2 Engine as templating language for storage paths. For details on the
+language see the official [Jinja2 Docs](https://jinja.palletsprojects.com/en/latest/templates/).
+Newlines are automatically removed when rendering a template.
+It provides the following global variables within filenames:
 
-- `{asn}`: The archive serial number of the document, or "none".
-- `{correspondent}`: The name of the correspondent, or "none".
-- `{document_type}`: The name of the document type, or "none".
-- `{tag_list}`: A comma separated list of all tags assigned to the
+- `{{ asn }}`: The archive serial number of the document, or "none".
+- `{{ correspondent }}`: The name of the correspondent, or "none".
+- `{{ document_type }}`: The name of the document type, or "none".
+- `{{ tag_list }}`: A comma separated list of all tags assigned to the
   document.
-- `{title}`: The title of the document.
-- `{created}`: The full date (ISO format) the document was created.
-- `{created_year}`: Year created only, formatted as the year with
+- `{{ title }}`: The title of the document.
+- `{{ created }}`: The full date (ISO format) the document was created.
+- `{{ created_year }}`: Year created only, formatted as the year with
   century.
-- `{created_year_short}`: Year created only, formatted as the year
+- `{{ created_year_short }}`: Year created only, formatted as the year
   without century, zero padded.
-- `{created_month}`: Month created only (number 01-12).
-- `{created_month_name}`: Month created name, as per locale
-- `{created_month_name_short}`: Month created abbreviated name, as per
+- `{{ created_month }}`: Month created only (number 01-12).
+- `{{ created_month_name }}`: Month created name, as per locale
+- `{{ created_month_name_short }}`: Month created abbreviated name, as per
   locale
-- `{created_day}`: Day created only (number 01-31).
-- `{added}`: The full date (ISO format) the document was added to
+- `{{ created_day }}`: Day created only (number 01-31).
+- `{{ added }}`: The full date (ISO format) the document was added to
   paperless.
-- `{added_year}`: Year added only.
-- `{added_year_short}`: Year added only, formatted as the year without
+- `{{ added_year }}`: Year added only.
+- `{{ added_year_short }}`: Year added only, formatted as the year without
   century, zero padded.
-- `{added_month}`: Month added only (number 01-12).
-- `{added_month_name}`: Month added name, as per locale
-- `{added_month_name_short}`: Month added abbreviated name, as per
+- `{{ added_month }}`: Month added only (number 01-12).
+- `{{ added_month_name }}`: Month added name, as per locale
+- `{{ added_month_name_short }}`: Month added abbreviated name, as per
   locale
-- `{added_day}`: Day added only (number 01-31).
-- `{owner_username}`: Username of document owner, if any, or "none"
-- `{original_name}`: Document original filename, minus the extension, if any, or "none"
-- `{doc_pk}`: The paperless identifier (primary key) for the document.
+- `{{ added_day }}`: Day added only (number 01-31).
+- `{{ owner_username }}`: Username of document owner, if any, or "none"
+- `{{ original_name }}`: Document original filename, minus the extension, if any, or "none"
+- `{{ doc_pk }}`: The paperless identifier (primary key) for the document.
 
 !!! warning
 
-    When using file name placeholders, in particular when using `{tag_list}`,
+    When using file name placeholders, in particular when using `{{ tag_list }}`,
     you may run into the limits of your operating system's maximum path lengths.
     In that case, files will retain the previous path instead and the issue logged.
 
@@ -357,7 +360,7 @@ paperless will fall back to using the default naming scheme instead.
     outside the media directory by setting
 
     ```
-    PAPERLESS_FILENAME_FORMAT=../../my/custom/location/{title}
+    PAPERLESS_FILENAME_FORMAT=../../my/custom/location/{{ title }}
     ```
 
     However, keep in mind that inside docker, if files get stored outside of
@@ -390,8 +393,8 @@ For example, you could define the following two storage paths:
     the correspondence.
 
 ```
-By Year = {created_year}/{correspondent}/{title}
-Insurances = Insurances/{correspondent}/{created_year}-{created_month}-{created_day} {title}
+By Year = {{ created_year }}/{{ correspondent }}/{{ title }}
+Insurances = Insurances/{{ correspondent }}/{{ created_year }}-{{ created_month }}-{{ created_day }} {{ title }}
 ```
 
 If you then map these storage paths to the documents, you might get the
