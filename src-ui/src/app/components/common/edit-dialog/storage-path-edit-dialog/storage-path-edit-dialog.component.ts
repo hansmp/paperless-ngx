@@ -26,9 +26,9 @@ export class StoragePathEditDialogComponent extends EditDialogComponent<StorageP
   get pathHint() {
     return (
       $localize`e.g.` +
-      ' <code>{created_year}-{title}</code> ' +
+      ' <code>{{ created_year }}-{{ title }}</code> ' +
       $localize`or use slashes to add directories e.g.` +
-      ' <code>{created_year}/{correspondent}/{title}</code>. ' +
+      ' <code>{{ created_year }}/{{ correspondent }}/{{ title }}</code>. ' +
       $localize`See <a target="_blank" href="https://docs.paperless-ngx.com/advanced_usage/#file-name-handling">documentation</a> for full list.`
     )
   }
