@@ -62,6 +62,7 @@ from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.validators import ValidationError
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet
@@ -70,6 +71,7 @@ from rest_framework.viewsets import ViewSet
 
 from documents import bulk_edit
 from documents import index
+from documents import templating
 from documents.bulk_download import ArchiveOnlyStrategy
 from documents.bulk_download import OriginalAndArchiveStrategy
 from documents.bulk_download import OriginalsOnlyStrategy
@@ -143,6 +145,7 @@ from documents.serialisers import StoragePathSerializer
 from documents.serialisers import TagSerializer
 from documents.serialisers import TagSerializerVersion1
 from documents.serialisers import TasksViewSerializer
+from documents.serialisers import TemplatingPreviewRequestSerializer
 from documents.serialisers import TrashSerializer
 from documents.serialisers import UiSettingsViewSerializer
 from documents.serialisers import WorkflowActionSerializer
@@ -2103,3 +2106,49 @@ class TrashView(ListModelMixin, PassUserMixin):
                 doc_ids = [doc.id for doc in docs]
             empty_trash(doc_ids=doc_ids)
         return Response({"result": "OK", "doc_ids": doc_ids})
+
+
+class TemplatingPreviewViewSet(GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TemplatingPreviewRequestSerializer
+
+    def list(self, request, *args, **kwargs):  # list all available preview docs
+        docs = Document.objects.values_list("id", "title", flat=False)
+        return Response({"DocsForPreview": docs})
+
+    def create(self, request, *args, **kwargs):  # post to get actual preview
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            doc_id = serializer.validated_data.get("doc_id")
+            template = serializer.validated_data.get("template")
+
+            doc: Document = None
+            if doc_id is not None:
+                if not Document.objects.filter(id=doc_id).exists():
+                    raise Http404(
+                        f"Document (id={doc_id}) for preview does not exists!",
+                    )
+                doc = Document.objects.get(id=doc_id)
+
+            rendered = templating.validateTemplate(template, True, doc)
+            return Response(
+                {
+                    "result": "OK",
+                    "input": template,
+                    "doc_id": doc_id,
+                    "preview": rendered.preview,
+                    "warnings": rendered.warnings,
+                    "errors": rendered.errors,
+                    "debug_string": rendered.debugString,
+                },
+            )
+
+        except Http404 as e:
+            raise e
+        except ValidationError as e:
+            raise e
+        except Exception as e:
+            logger.exception(f"Error handling templating preview request: {e}")
+            raise HttpResponseBadRequest("Unknown error - see log for details!")

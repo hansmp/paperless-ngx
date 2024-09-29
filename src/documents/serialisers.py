@@ -2015,3 +2015,8 @@ class TrashSerializer(SerializerWithPerms):
                 "Some documents in the list have not yet been deleted.",
             )
         return documents
+
+
+class TemplatingPreviewRequestSerializer(serializers.Serializer):
+    doc_id = serializers.IntegerField(required=False)
+    template = serializers.CharField()

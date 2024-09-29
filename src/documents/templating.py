@@ -157,10 +157,15 @@ def createGlobals(
 def validateTemplate(
     templatedString: str,
     allowEmptyOuptut: bool,
+    documentForGlobals: Document = None,
 ):
     result = TemplatingValidationResult()
     try:
-        validationGlobals = createDummyGlobals()
+        validationGlobals = (
+            createDummyGlobals()
+            if documentForGlobals is None
+            else createGlobals(documentForGlobals)
+        )
 
         resolvedStringWithDebug = loadTemplateWithJinja2(
             templatedString,

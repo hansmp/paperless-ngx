@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from datetime import timedelta
@@ -8,6 +9,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.test import APITestCase
 
 from documents.models import Document
 from documents.models import ShareLink
@@ -132,3 +134,78 @@ class TestViews(DirectoriesMixin, TestCase):
         response.render()
         self.assertEqual(response.request["PATH_INFO"], "/accounts/login/")
         self.assertContains(response, b"Share link has expired")
+
+
+class TestTemplatingPreviewView(APITestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create_superuser("testuser")
+        self.doc = Document.objects.create()
+        self.doc.title = "TestTitle"
+        self.doc.save()
+        super().setUp()
+
+    def test_lists_all_docs_for_preview(self):
+        self.client.force_login(self.user)
+        response = self.client.get("/api/templating_preview/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        resultJson = json.loads(response.content)
+        self.assertEqual(len(resultJson["DocsForPreview"]), 1)
+        self.assertEqual(resultJson["DocsForPreview"][0][1], self.doc.title)
+
+    def test_preview_with_no_doc(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/templating_preview/",
+            {"template": "{{title}}"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        resultJson = json.loads(response.content)
+        self.assertEqual(resultJson["result"], "OK")
+        self.assertEqual(resultJson["preview"], "title")
+        self.assertEqual(len(resultJson["errors"]), 0)
+        self.assertEqual(len(resultJson["warnings"]), 0)
+
+    def test_preview_with_valid_doc(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/templating_preview/",
+            {"template": "{{title}}", "doc_id": 1},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        resultJson = json.loads(response.content)
+        self.assertEqual(resultJson["result"], "OK")
+        self.assertEqual(resultJson["preview"], f"{self.doc.title}")
+        self.assertEqual(len(resultJson["errors"]), 0)
+        self.assertEqual(len(resultJson["warnings"]), 0)
+
+    def test_preview_with_invalid_doc(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/templating_preview/",
+            {"template": "{{title}}", "doc_id": 99},
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.content,
+            b'{"detail":"Document (id=99) for preview does not exists!"}',
+        )
+
+    def test_preview_with_invalid_template(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/templating_preview/",
+            {"template": "{{title", "doc_id": 1},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        resultJson = json.loads(response.content)
+        self.assertEqual(len(resultJson["errors"]), 1)
+        self.assertEqual(len(resultJson["warnings"]), 0)
+        self.assertEqual(resultJson["result"], "OK")
+        self.assertEqual(resultJson["preview"], "<NOT RENDERED>")
+        self.assertTrue(resultJson["errors"][0].startswith("Syntax error:"))
+
+    def test_preview_with_missing_template(self):
+        self.client.force_login(self.user)
+        response = self.client.post("/api/templating_preview/", {"doc_id": 1})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.content, b'{"template":["This field is required."]}')

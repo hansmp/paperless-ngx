@@ -36,6 +36,7 @@ from documents.views import StoragePathViewSet
 from documents.views import SystemStatusView
 from documents.views import TagViewSet
 from documents.views import TasksViewSet
+from documents.views import TemplatingPreviewViewSet
 from documents.views import TrashView
 from documents.views import UiSettingsView
 from documents.views import UnifiedSearchViewSet
@@ -74,6 +75,11 @@ api_router.register(r"workflow_actions", WorkflowActionViewSet)
 api_router.register(r"workflows", WorkflowViewSet)
 api_router.register(r"custom_fields", CustomFieldViewSet)
 api_router.register(r"config", ApplicationConfigurationViewSet)
+api_router.register(
+    r"templating_preview",
+    TemplatingPreviewViewSet,
+    basename="templating_preview",
+)
 
 
 urlpatterns = [
