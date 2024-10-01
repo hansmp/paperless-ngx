@@ -2123,6 +2123,10 @@ class TemplatingPreviewViewSet(GenericViewSet):
 
             doc_id = serializer.validated_data.get("doc_id")
             template = serializer.validated_data.get("template")
+            remove_new_lines = serializer.validated_data.get("remove_new_lines")
+
+            if remove_new_lines is None:
+                remove_new_lines = False
 
             doc: Document = None
             if doc_id is not None:
@@ -2132,7 +2136,12 @@ class TemplatingPreviewViewSet(GenericViewSet):
                     )
                 doc = Document.objects.get(id=doc_id)
 
-            rendered = templating.validateTemplate(template, True, doc)
+            rendered = templating.validateTemplate(
+                template,
+                True,
+                remove_new_lines,
+                doc,
+            )
             return Response(
                 {
                     "result": "OK",

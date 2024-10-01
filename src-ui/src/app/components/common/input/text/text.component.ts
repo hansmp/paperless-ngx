@@ -21,6 +21,12 @@ export class TextComponent extends AbstractInputComponent<string> {
   @Input()
   placeholder: string = ''
 
+  @Input()
+  multiline: boolean = false
+
+  @Input()
+  rows: number = 3
+
   constructor() {
     super()
   }

@@ -1481,7 +1481,7 @@ class StoragePathSerializer(MatchingModelSerializer, OwnedObjectSerializer):
         validationResult: templating.TemplatingValidationResult = {}
         trimmed = ""
         try:
-            validationResult = templating.validateTemplate(path, False)
+            validationResult = templating.validateTemplate(path, False, True)
 
             trimmed = validationResult.preview.strip(os.sep)
 
@@ -2020,3 +2020,4 @@ class TrashSerializer(SerializerWithPerms):
 class TemplatingPreviewRequestSerializer(serializers.Serializer):
     doc_id = serializers.IntegerField(required=False)
     template = serializers.CharField()
+    remove_new_lines = serializers.BooleanField()

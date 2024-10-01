@@ -165,6 +165,30 @@ class TestTemplatingPreviewView(APITestCase):
         self.assertEqual(len(resultJson["errors"]), 0)
         self.assertEqual(len(resultJson["warnings"]), 0)
 
+    def test_preview_with_no_doc_newlines(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/templating_preview/",
+            {"template": "{{title}}\nBar"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        resultJson = json.loads(response.content)
+        self.assertEqual(resultJson["result"], "OK")
+        self.assertEqual(resultJson["preview"], "title\nBar")
+        self.assertEqual(len(resultJson["errors"]), 0)
+        self.assertEqual(len(resultJson["warnings"]), 0)
+
+        response2 = self.client.post(
+            "/api/templating_preview/",
+            {"template": "{{title}}\nBar", "remove_new_lines": "true"},
+        )
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        resultJson2 = json.loads(response2.content)
+        self.assertEqual(resultJson2["result"], "OK")
+        self.assertEqual(resultJson2["preview"], "titleBar")
+        self.assertEqual(len(resultJson2["errors"]), 0)
+        self.assertEqual(len(resultJson2["warnings"]), 0)
+
     def test_preview_with_valid_doc(self):
         self.client.force_login(self.user)
         response = self.client.post(

@@ -25,6 +25,28 @@ class TestTemplating(TestCase):
         self.assertEqual(result, "SomeText")
         return
 
+    def test_simple_generic_template_with_newline(self):
+        testString = "{{foo}}\nBar"
+        testGlobals = {"foo": "SomeText"}
+        jinjaRenderEnv = Environment(undefined=StrictUndefined)
+
+        result = templating.loadTemplateWithJinja2(
+            testString,
+            jinjaRenderEnv,
+            testGlobals,
+            False,
+        )
+        self.assertEqual(result, "SomeText\nBar")
+
+        result2 = templating.loadTemplateWithJinja2(
+            testString,
+            jinjaRenderEnv,
+            testGlobals,
+            True,
+        )
+        self.assertEqual(result2, "SomeTextBar")
+        return
+
     def test_generic_template_with_unset_var(self):
         testString = "{{foo}}"
         testGlobals = {"bar": "SomeText"}
@@ -135,6 +157,21 @@ class TestTemplating(TestCase):
         self.assertEqual(len(result.warnings), 0)
         self.assertNotEqual(result.preview, "")
 
+        return
+
+    def test_validate_valid_template_with_newlines(self):
+        testString = "{{title}}{{tags['foo'] | d('NONE')}}\nBAR"
+        result = templating.validateTemplate(testString, False, False)
+
+        self.assertEqual(len(result.errors), 0)
+        self.assertEqual(len(result.warnings), 0)
+        self.assertEqual(result.preview, "titleNONE\nBAR")
+
+        result2 = templating.validateTemplate(testString, False, True)
+
+        self.assertEqual(len(result2.errors), 0)
+        self.assertEqual(len(result2.warnings), 0)
+        self.assertEqual(result2.preview, "titleNONEBAR")
         return
 
     def test_validate_unknown_vars(self):

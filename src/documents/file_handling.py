@@ -110,7 +110,7 @@ def generate_filename(
             filename_format = doc.storage_path.path
 
         if filename_format is not None:
-            path = templating.renderTemplate(filename_format, doc)
+            path = templating.renderTemplate(filename_format, doc, True)
 
             if path is None:
                 raise Exception("")

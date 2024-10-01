@@ -157,6 +157,7 @@ def createGlobals(
 def validateTemplate(
     templatedString: str,
     allowEmptyOuptut: bool,
+    removeNewLines: bool = False,
     documentForGlobals: Document = None,
 ):
     result = TemplatingValidationResult()
@@ -171,6 +172,7 @@ def validateTemplate(
             templatedString,
             jinjaDebugEnv,
             validationGlobals,
+            removeNewLines,
         )
         result.debugString = resolvedStringWithDebug
 
@@ -188,6 +190,7 @@ def validateTemplate(
             templatedString,
             jinjaRenderEnv,
             validationGlobals,
+            removeNewLines,
         )
         result.preview = resolvedString
 
@@ -207,6 +210,7 @@ def validateTemplate(
 def renderTemplate(
     templatedString: str,
     doc: Document,
+    removeNewLines: bool = False,
 ):
     if doc is None:
         logger.error("Can't render template without document!")
@@ -217,6 +221,7 @@ def renderTemplate(
             templatedString,
             jinjaRenderEnvStrict,
             globals,
+            removeNewLines,
         )
 
     except Exception as err:
@@ -231,10 +236,15 @@ def loadTemplateWithJinja2(
     templatedString: str,
     usedEnv: Environment,
     globals: dict,
+    removeNewLines: bool = False,
 ):
     try:
         template = usedEnv.from_string(templatedString, globals)
         resolvedString = template.render()
+
+        if removeNewLines:
+            resolvedString = resolvedString.replace("\n", "")
+
         logger.debug("Rendered string: %s", resolvedString)
         return resolvedString
 
